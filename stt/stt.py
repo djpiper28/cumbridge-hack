@@ -8,7 +8,7 @@ import os
 def get_some_text(file_name: str) -> str:
     print(f"Transcribing {file_name} mate")
     output: str = "output"
-    subprocess.Popen(f"vosk-transcriber --input {file_name} > {output}", shell=True)
+    subprocess.run(f"vosk-transcriber --input {file_name} > {output}", shell=True)
     with open(output, "r") as f:
         data = f.read()
         print(f"WHHHHEEEEEEEYYYYYYYYYYYYYYYYYYYYYY WE HAVE SOME TEXT ME GEEZ: {data}")
@@ -25,7 +25,7 @@ def __reset_crappy_file() -> None:
         os.remove(CRAPPY_FILE)
     except:
         print("Seems legit mate")
-    subprocess.run(f"./stop_button {CRAPPY_FILE}", shell=True)
+    subprocess.Popen(f"./stop_button {CRAPPY_FILE}", shell=True)
 
 
 def __record_audio() -> bool:
