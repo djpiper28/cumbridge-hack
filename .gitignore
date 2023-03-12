@@ -1,3 +1,5 @@
 .env
 
 build-CrappyStopButton-Desktop-Debug/
+
+stt/__pycache__/
