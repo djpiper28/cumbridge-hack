@@ -87,7 +87,7 @@ def convert_file(wav_f, mp3_f) -> None:
     )
 
 
-def stt() -> str:
+def do_stt() -> str:
     FILE: str = "audio.wav"
     FILE_MP: str = FILE.replace("wav", "mp3")
     get_some_audio(FILE)
@@ -96,4 +96,4 @@ def stt() -> str:
 
 
 if __name__ == "__main__":
-    stt()
+    do_stt()

@@ -22,14 +22,12 @@ messages = [
 while True:
     # Get the user's input
     input("Press enter to speak to the geezer")
-    user_input = input("You: " + sst.stt())
-
-    if user_input == "":
-        break
+    user_input = stt.stt.do_stt()
 
     # Add the user's input to the messages
     messages.append({"role": "user", "content": user_input})
 
+    print("Asking the horse")
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
@@ -42,4 +40,5 @@ while True:
     # Add the bot's response to the messages
     messages.append({"role": "system", "content": msgResponse})
 
+    print("Getting audio")
     voice.generate_and_play_audio(msgResponse, playInBackground=False)

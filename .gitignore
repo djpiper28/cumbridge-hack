@@ -3,3 +3,13 @@
 build-CrappyStopButton-Desktop-Debug/
 
 stt/__pycache__/
+
+crappy_file
+
+*.mp3
+
+*.wav
+
+output
+
+stop_button
