@@ -1,8 +1,10 @@
 import openai
 import os
 from elevenlabslib import *
+from dotenv import load_dotenv
 
-model = whisper.load_model("base")
+load_dotenv()
+
 user = ElevenLabsUser(os.getenv("ELEVENLABS_API_KEY"))
 voice = user.get_voices_by_name("AndrewTate2")[0]
 

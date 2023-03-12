@@ -2,6 +2,9 @@ import openai
 import os
 import stt.stt
 from elevenlabslib import *
+from dotenv import load_dotenv
+
+load_dotenv()
 
 user = ElevenLabsUser(os.getenv("ELEVENLABS_API_KEY"))
 voice = user.get_voices_by_name("AndrewTate2")[0]
