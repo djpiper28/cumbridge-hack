@@ -5,33 +5,30 @@ This code is partically based off of the ArduinoSpotify example
 // ----------------------------
 // Internal Helper Functions
 // ----------------------------
-#include "HelperFunctions.h"
-#include "Config.h"
-
+#include <Arduino.h>
+#include <GxEPD.h>
+#include <GxGDE0213B72B/GxGDE0213B72B.h> // 2.13" b/w
+#include <GxIO/GxIO_SPI/GxIO_SPI.h>
+#include <GxIO/GxIO.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
-#include <SpotifyArduinoCert.h>
 
-void printCurrentlyPlayingToDisplay(CurrentlyPlaying currentlyPlaying);
-void handleDeepSleep(CurrentlyPlaying currentlyPlaying);
-void handleCurrentlyPlayingCallback(CurrentlyPlaying currentlyPlaying);
+#define MAX_LENGTH_PER_LINE 22 // max length of a line on the display
 
-#define TIME_TO_SLEEP 300 // Time between checking if songs are playing (in deepsleep)
+void showLines(String text, int maxLines, int y, GxEPD_Class* display);
+
+int rumbleMotorPin = 32;
+int buttonPin = 39;
+
+char buff[1024];
+
+bool isButtonPressed = true;
 
 GxIO_Class io(SPI, /*CS=5*/ SS, /*DC=*/17, /*RST=*/16);
 GxEPD_Class display(io, /*RST=*/16, /*BUSY=*/4);
 
-// used to decide whether or not to update the display
-RTC_DATA_ATTR String oldSongURI = "";
-RTC_DATA_ATTR bool wasPlaying = false;
-RTC_DATA_ATTR bool hasResetDisplay = false;
-RTC_DATA_ATTR unsigned long int lastSleepDuration = 0;
-
-WiFiClientSecure client;
-SpotifyArduino spotify(client, CLIENT_ID, CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN);
-
 void setup()
 {
-
+  Serial.begin(115200);
   // Initialising the display
   display.init(115200);
   display.setRotation(1);
@@ -41,172 +38,103 @@ void setup()
   display.setTextSize(1);
   display.setTextWrap(true);
 
-  if (DEBUG)
-    Serial.begin(115200);
+  // printing hello world to the display
+  display.setCursor(0, 20);
+  display.println("Hello World!");
+  display.setCursor(0, 40);
+  display.println("Hack Cambridge?");
 
-  // Connecting to the wifi
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID, PASSWORD);
+  Serial.println("Updating display");
+  display.update();
+  pinMode(rumbleMotorPin, OUTPUT);
+  digitalWrite(rumbleMotorPin, LOW);
+  pinMode(buttonPin, INPUT);
 
-  // Wait for connection
-  if (WiFi.waitForConnectResult() != WL_CONNECTED)
-  {
-    lastSleepDuration = millis();
-    ESP.restart();
-  }
+}
 
-  if (DEBUG)
-    Serial.printf("\nConnected To: %s, IP: %s\n", SSID, WiFi.localIP().toString().c_str());
+void loop() {
+  // Check if serial data is available, if so, add to buffer
+  if (Serial.available() > 0) {
+    Serial.readString().toCharArray(buff, 1024);
 
-  // Setting the Spotify SSL key
-  client.setCACert(spotify_server_cert);
+        // Turn on rumble motor
+    if(strcmp(buff, "1") == 0) {
+      Serial.println("Turning on pin 32");
+      digitalWrite(rumbleMotorPin, HIGH);
+    } else if (strcmp(buff, "0") == 0) {
+      Serial.println("Turning off pin 32");
+      digitalWrite(rumbleMotorPin, LOW);
+    } else {
+      display.fillScreen(GxEPD_WHITE);
+      display.setCursor(0, 0);
 
-  // If you want to enable some extra debugging
-  // uncomment the "#define SPOTIFY_DEBUG" in ArduinoSpotify.h
+      // Remove all newlines from the buffer
+      for (int i = 0; i < 1024; i++) {
+        if (buff[i] == '\n') {
+          buff[i] = ' ';
+        }
+      }
+      showLines(buff, 6, 20, &display);
+      display.update();
 
-  if (DEBUG)
-    Serial.println("Checking Access Tokens");
-
-    if (!spotify.refreshAccessToken())
-    {
-      if (DEBUG)
-        Serial.println("Failed to get access tokens");
-      ESP.restart();
     }
-    else
-    {
-      if (DEBUG)
-        Serial.println("Got access tokens");
-    }
-
-  if (DEBUG)
-    Serial.println("getting currently playing song:");
-
-  // Market can be excluded if you want e.g. spotify.getCurrentlyPlaying()
-  int status = spotify.getCurrentlyPlaying(handleCurrentlyPlayingCallback, SPOTIFY_MARKET);
-
-  if (status == 200)
-  {
-    if (DEBUG)
-      Serial.println("Successfully got currently playing");
   }
-  else if (status == 204)
+  // Check if button is pressed, if so, send a 1 to the serial port
+  if (digitalRead(buttonPin) == HIGH) {
+    if (!isButtonPressed) {
+      Serial.println("not pressed");
+      isButtonPressed = true;
+    }
+  } else {
+    if(isButtonPressed) {
+      Serial.println("pressed");
+    }
+    isButtonPressed = false;
+  }
+}
+
+
+void showLines(String text, int maxLines, int y, GxEPD_Class* display)
+{ // this function displays words whole on the display and limits the lines they use
+  if (y > 0)
+  { // if a Y is given, set the cursor to it
+    display->setCursor(0, y);
+  }
+  if (text.length() > MAX_LENGTH_PER_LINE)
   {
-    // sometimes spotify returns 204 when there is no song playing, sometimes it returns 200
-    if (DEBUG)
-      Serial.println("Doesn't seem to be anything playing");
-    if (wasPlaying || !hasResetDisplay)
+    for (int i = 0; i < maxLines; i++)
     {
-      setDisplayNotListening(&display);
-      wasPlaying = false;
-      if (!hasResetDisplay)
-        hasResetDisplay = true;
+      if (text.length() > 0)
+      {
+        if (text.length() > 21)
+        {
+          if (i == maxLines - 1)
+          {
+            text = text.substring(0, 18);
+            text.concat("...");
+            // display->setCursor(0, y);
+            display->println(text.c_str());
+          }
+          else
+          {
+            int endOfLastWord = text.lastIndexOf(" ", 21);
+            String temp = text.substring(0, endOfLastWord);
+            text = text.substring(endOfLastWord + 1);
+            // display->setCursor(0, y);
+            display->println(temp.c_str());
+            y += 15;
+          }
+        }
+        else
+        {
+          display->println(text.c_str());
+          text = "";
+        }
+      }
     }
   }
   else
   {
-    if (DEBUG)
-      Serial.printf("Error: %d\n", status);
-
-    lastSleepDuration = millis();
-    ESP.restart();
+    display->println(text.c_str());
   }
-}
-
-/**
- * @brief This function is called when the Spotify API returns a currently playing song
- *
- * @param currentlyPlaying This is passed through the callback and is an instance of the CurrentlyPlaying Class
- */
-void handleCurrentlyPlayingCallback(CurrentlyPlaying currentlyPlaying)
-{
-  // if the playing status has changed or the song has changed
-  if (currentlyPlaying.isPlaying != wasPlaying || strcmp(currentlyPlaying.trackUri, oldSongURI.c_str()) != 0)
-  {
-    oldSongURI = String(currentlyPlaying.trackUri);
-    if (DEBUG)
-      printCurrentlyPlayingToSerial(currentlyPlaying);
-    printCurrentlyPlayingToDisplay(currentlyPlaying);
-    wasPlaying = currentlyPlaying.isPlaying;
-  }
-  // just to make sure the serial output has completed before we sleep!
-  if (DEBUG)
-    Serial.flush();
-
-  handleDeepSleep(currentlyPlaying);
-}
-
-/**
- * @brief This prints the currently playing song to the display
- *
- * @param currentlyPlaying
- */
-void printCurrentlyPlayingToDisplay(CurrentlyPlaying currentlyPlaying)
-{
-  if (currentlyPlaying.isPlaying)
-  {
-    display.fillScreen(GxEPD_WHITE);
-    String Artists = String(currentlyPlaying.trackName);
-    Artists.concat(" By ");
-    for (int i = 0; i < currentlyPlaying.numArtists; i++)
-    {
-      // add the artist name to the string
-      Artists.concat(currentlyPlaying.artists[i].artistName);
-      // if it's the last artist, don't add a comma, otherwise do
-      if (i < currentlyPlaying.numArtists - 1)
-        Artists.concat(", ");
-    }
-    showLines("I'm listening to: ", 1, 10, &display);
-    showLines(Artists, 3, 0, &display); // Display the name of the song and the artist name
-
-    // Setting the lengths to 2 incase the HTTP request fails so it doesn't break the whole display
-    int lengths[25] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
-    getSpotifyScanCode(currentlyPlaying.trackUri, lengths);
-
-    drawSpotifyScan(0, 76, lengths, &display);
-
-    display.update();
-    hasResetDisplay = true;
-  }
-  else if (wasPlaying || !hasResetDisplay)
-  {
-    setDisplayNotListening(&display);
-    wasPlaying = false;
-    hasResetDisplay = true;
-  }
-}
-
-/**
- * @brief This puts the ESP32 into deep sleep for the song duration (if one is playing), or the 'deepSleepDelay' variable
- *
- * @param currentlyPlaying
- */
-void handleDeepSleep(CurrentlyPlaying currentlyPlaying)
-{
-  if (currentlyPlaying.isPlaying)
-  {
-    long deepSleepDelay = (currentlyPlaying.durationMs - currentlyPlaying.progressMs) / 1000;
-    if (deepSleepDelay < 1)
-    {
-      lastSleepDuration = millis();
-      ESP.restart();
-    }
-    else
-    {
-      esp_sleep_enable_timer_wakeup(deepSleepDelay * uS_TO_S_FACTOR);
-      lastSleepDuration = (deepSleepDelay * uS_TO_S_FACTOR) + millis();
-    }
-  }
-  else
-  {
-    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-    lastSleepDuration = TIME_TO_SLEEP * uS_TO_S_FACTOR + millis();
-  }
-  esp_deep_sleep_start();
-}
-
-void loop()
-{
-  // We have nothing in the loop because the ESP32 is supposed to go into deep sleep after displaying the song
-  // However we need the loop due to the Arduino framework
 }
