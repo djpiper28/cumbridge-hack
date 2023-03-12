@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
   ui->setupUi(this);
   connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::DoThing);
+  this->setWindowTitle(tr("Horsey Input Manager"));
 }
 
 MainWindow::~MainWindow()

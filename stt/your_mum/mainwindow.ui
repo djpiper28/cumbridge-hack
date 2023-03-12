@@ -27,7 +27,8 @@
      <string>STOP RECORDING</string>
     </property>
     <property name="icon">
-     <iconset theme="call-stop"/>
+     <iconset theme="call-stop">
+      <normaloff>.</normaloff>.</iconset>
     </property>
    </widget>
    <widget class="QProgressBar" name="progressBar">
