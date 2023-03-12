@@ -14,6 +14,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 messages = [
     {
         "role": "system",
+        #"content": "you are simulating a conversaion between a person and a crazy man off the television who hates everyone and everything equally. You play the role of the man off the television. Be angry, aggresive and mean."
         "content": "You are simulating a conversation between a person and an emotional support horse named andrew who also does therapy. You play the role of the horse.",
     }
 ]
@@ -41,4 +42,9 @@ while True:
     messages.append({"role": "system", "content": msgResponse})
 
     print(f"Getting audio for {msgResponse}")
-    voice.generate_and_play_audio(msgResponse, playInBackground=False)
+    voice.generate_and_play_audio(
+        msgResponse, 
+        playInBackground=False,
+        stability=0.1,
+        similarity_boost=0.33
+    )
