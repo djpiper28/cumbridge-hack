@@ -3,6 +3,7 @@ import subprocess
 import pyaudio
 import wave
 import os
+import threading
 import serial
 
 
@@ -29,24 +30,24 @@ def __reset_crappy_file() -> None:
     subprocess.Popen(f"./stop_button {CRAPPY_FILE}", shell=True)
 
 
-def __record_audio() -> bool:
-    with serial.Serial(os.getenv("USB_NAME"), 112500, timeout=10) as ser:
-        while True:
-            line = ser.readline()   # read a '\n' terminated line
-            #print(line)
-            # Check if the line contains "not pressed" or "pressed"
-            if b'not pressed' in line:
-                break
-            elif b'pressed' in line:
-                print('Button is pressed')
+button_down: bool = False
 
-    return not os.path.isfile(CRAPPY_FILE)
-
+def wait_button_down(serial) -> None:
+    global button_down
+    button_down = False
+    while "released" not in str(serial.readline()):
+        pass
+    button_down = True
     
 
+def __record_audio() -> bool:
+    global button_down
+    return button_down
 
-def get_some_audio(file_name: str) -> None:
-    __reset_crappy_file()
+
+def get_some_audio(file_name: str, serial) -> None:
+    threading.Thread(target=wait_button_down(serial), args=(serial,)).start()
+    #__reset_crappy_file()
     chunk = 1024  # Record in chunks of 1024 samples
     sample_format = pyaudio.paInt16  # 16 bits per sample
     channels = 2
@@ -100,10 +101,10 @@ def convert_file(wav_f, mp3_f) -> None:
     )
 
 
-def do_stt() -> str:
+def do_stt(ser) -> str:
     FILE: str = "audio.wav"
     FILE_MP: str = FILE.replace("wav", "mp3")
-    get_some_audio(FILE)
+    get_some_audio(FILE, ser)
     convert_file(FILE, FILE_MP)
     return get_some_text(FILE_MP)
 

@@ -20,33 +20,32 @@ messages = [
 ]
 
 
-while True:
-    # Get the user's input
-    input("Press enter to speak to the geezer")
-    user_input = stt.stt.do_stt()
+with serial.Serial(os.getenv("USB_NAME"), 112500, timeout=10) as ser:
+    while True:
+        # Get the user's input
+        while "pressed" not in str(ser.readline()):
+            pass
+        user_input = stt.stt.do_stt(ser)
 
-    # Add the user's input to the messages
-    messages.append({"role": "user", "content": user_input})
+        # Add the user's input to the messages
+        messages.append({"role": "user", "content": user_input})
 
-    print("Asking the horse")
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        temperature=0.9,
-        max_tokens=150,
-    )
+        print("Asking the horse")
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.9,
+            max_tokens=150,
+        )
 
-    msgResponse = response.choices[0].message.content
+        msgResponse: str = response.choices[0].message.content
 
-    with serial.Serial(os.getenv("USB_NAME"), 112500, timeout=10) as ser:
-        ser.write(msgResponse)     # write a string
-        ser.write(b'\r')        # write a string
+        ser.write(msgResponse)
+        ser.write(b'\r')
+        ser.flush()
 
-    # Add the bot's response to the messages
-    messages.append({"role": "system", "content": msgResponse})
+        # Add the bot's response to the messages
+        messages.append({"role": "system", "content": msgResponse})
 
-    print(f"Getting audio for {msgResponse}")
-    voice.generate_and_play_audio(msgResponse, playInBackground=False)
-
-
-
+        print(f"Getting audio for {msgResponse}")
+        voice.generate_and_play_audio(msgResponse, playInBackground=False)
