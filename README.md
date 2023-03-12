@@ -4,7 +4,8 @@ cumbridge-hack
 
 ## Installation
 Whisper requires FFMPEG
-```# on Ubuntu or Debian
+```
+# on Ubuntu or Debian
 sudo apt update && sudo apt install ffmpeg
 
 # on Arch Linux
@@ -17,4 +18,14 @@ brew install ffmpeg
 choco install ffmpeg
 
 # on Windows using Scoop (https://scoop.sh/)
-scoop install ffmpeg```
+scoop install ffmpeg
+```
+
+
+## Usage
+
+Setup with the ENV variables
+```
+OPENAI_API_KEY=
+ELEVENLABS_API_KEY=
+```
