@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 user = ElevenLabsUser(os.getenv("ELEVENLABS_API_KEY"))
-voice = user.get_voices_by_name("AndrewTate2")[0]
+voice = user.get_voices_by_name(os.getenv("VOICE_NAME"))[0]
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 

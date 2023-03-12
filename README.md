@@ -28,4 +28,5 @@ Setup with the ENV variables
 ```
 OPENAI_API_KEY=
 ELEVENLABS_API_KEY=
+VOICE_NAME=
 ```
