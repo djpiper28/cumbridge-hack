@@ -3,6 +3,7 @@ import subprocess
 import pyaudio
 import wave
 import os
+import serial
 
 
 def get_some_text(file_name: str) -> str:
@@ -29,7 +30,19 @@ def __reset_crappy_file() -> None:
 
 
 def __record_audio() -> bool:
+    with serial.Serial(os.getenv("USB_NAME"), 112500, timeout=10) as ser:
+        while True:
+            line = ser.readline()   # read a '\n' terminated line
+            #print(line)
+            # Check if the line contains "not pressed" or "pressed"
+            if b'not pressed' in line:
+                break
+            elif b'pressed' in line:
+                print('Button is pressed')
+
     return not os.path.isfile(CRAPPY_FILE)
+
+    
 
 
 def get_some_audio(file_name: str) -> None:
@@ -55,7 +68,7 @@ def get_some_audio(file_name: str) -> None:
     frames = []  # Initialize array to store frames
 
     while __record_audio():
-        for i in range(0, int(fs / chunk)):
+        for i in range(0, int(chunk)):
             data = stream.read(chunk)
             frames.append(data)
 

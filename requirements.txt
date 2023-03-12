@@ -3,3 +3,4 @@ elevenlabslib
 openai-whisper
 soundfile
 sounddevice
+pyserial

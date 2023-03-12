@@ -3,6 +3,7 @@ import os
 import stt.stt
 from elevenlabslib import *
 from dotenv import load_dotenv
+import serial
 
 load_dotenv()
 
@@ -37,8 +38,15 @@ while True:
 
     msgResponse = response.choices[0].message.content
 
+    with serial.Serial(os.getenv("USB_NAME"), 112500, timeout=10) as ser:
+        ser.write(msgResponse)     # write a string
+        ser.write(b'\r')        # write a string
+
     # Add the bot's response to the messages
     messages.append({"role": "system", "content": msgResponse})
 
     print(f"Getting audio for {msgResponse}")
     voice.generate_and_play_audio(msgResponse, playInBackground=False)
+
+
+
