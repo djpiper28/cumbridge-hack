@@ -1,3 +1,5 @@
 openai
 elevenlabslib
 openai-whisper
+soundfile
+sounddevice
