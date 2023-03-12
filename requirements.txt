@@ -1,0 +1,3 @@
+openai
+elevenlabslib
+openai-whisper
