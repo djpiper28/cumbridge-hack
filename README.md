@@ -3,6 +3,8 @@ For this micro-hackathon, we made an emotional support horse named Andrew. You c
 
 [Here's a video of it in action](https://youtu.be/YO5R1egwSto)
 
+[Here's the presentation we made for him](https://docs.google.com/presentation/d/1gJqjIcAYpn-tLTlfQqI9fpoD1DlS-UnHounE9-nIMMw)
+
 ## Installation
 Whisper requires FFMPEG
 ```
