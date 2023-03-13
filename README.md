@@ -1,6 +1,7 @@
-# cumbridge-hack
-cumbridge-hack
+# Hack Cambridge Spyder 2023
+For this micro-hackathon, we made an emotional support horse named Andrew. You could speak to it, and it would speak back in a synthesised voice of our choosing (Piers Morgan was the most popular one we used). It was based off of the GPT-3.5 Turbo API with Eleven Labs’ voice synthesis. We had an E-Paper display show what was being said, and a button you could click to trigger the microphone to listen to your problems.
 
+[Here's a video of it in action](https://youtu.be/YO5R1egwSto)
 
 ## Installation
 Whisper requires FFMPEG
